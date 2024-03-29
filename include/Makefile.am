@@ -6,26 +6,26 @@
 
 noinst_HEADERS = \
 	nccl_ofi.h \
-	nccl_ofi_api.h \
-	nccl_ofi_cuda.h \
-	nccl_ofi_deque.h \
-	nccl_ofi_freelist.h \
-	nccl_ofi_idpool.h \
-	nccl_ofi_log.h \
-	nccl_ofi_math.h \
-	nccl_ofi_memcheck.h \
-	nccl_ofi_memcheck_asan.h \
-	nccl_ofi_memcheck_nop.h \
-	nccl_ofi_memcheck_valgrind.h \
-	nccl_ofi_msgbuff.h \
-	nccl_ofi_param.h \
-	nccl_ofi_rdma.h \
-	nccl_ofi_sendrecv.h \
-	nccl_ofi_scheduler.h \
-	nccl_ofi_topo.h \
-	nccl_ofi_tuner.h \
-	nccl_ofi_ofiutils.h \
-	tracepoint.h \
+	nccl_ofi_api.hpp \
+	nccl_ofi_cuda.hpp \
+	nccl_ofi_deque.hpp \
+	nccl_ofi_freelist.hpp \
+	nccl_ofi_idpool.hpp \
+	nccl_ofi_log.hpp \
+	nccl_ofi_math.hpp \
+	nccl_ofi_memcheck.hpp \
+	nccl_ofi_memcheck_asan.hpp \
+	nccl_ofi_memcheck_nop.hpp \
+	nccl_ofi_memcheck_valgrind.hpp \
+	nccl_ofi_msgbuff.hpp \
+	nccl_ofi_param.hpp \
+	nccl_ofi_rdma.hpp \
+	nccl_ofi_sendrecv.hpp \
+	nccl_ofi_scheduler.hpp \
+	nccl_ofi_topo.hpp \
+	nccl_ofi_tuner.hpp \
+	nccl_ofi_ofiutils.hpp \
+	tracepoint.hpp \
 	nccl-headers/net.h \
 	nccl-headers/error.h \
 	nccl-headers/nvidia/err.h \

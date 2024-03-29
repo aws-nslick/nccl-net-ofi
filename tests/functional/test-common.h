@@ -6,12 +6,12 @@
 #define TEST_COMMON_H_
 
 #include <stdio.h>
-#include <string.h>
+#include <cstring>
 #include <stdlib.h>
 #include "nccl-headers/net.h"
 #include "nccl_ofi.h"
-#include "nccl_ofi_log.h"
-#include "nccl_ofi_param.h"
+#include "nccl_ofi_log.hpp"
+#include "nccl_ofi_param.hpp"
 #include "mpi.h"
 #include "config.h"
 #include <unistd.h>

@@ -18,9 +18,9 @@ extern "C" {
 #include <rdma/fi_tagged.h>
 #include <rdma/fi_rma.h>
 #include "nccl-headers/net.h"
-#include "nccl_ofi_log.h"
-#include "nccl_ofi_topo.h"
-#include "nccl_ofi_idpool.h"
+#include "nccl_ofi_log.hpp"
+#include "nccl_ofi_topo.hpp"
+#include "nccl_ofi_idpool.hpp"
 
 #ifdef __GNUC__
 #define OFI_LIKELY(x)	__builtin_expect((x), 1)
@@ -198,8 +198,8 @@ typedef struct nccl_ofi_connection_info {
 	nccl_net_ofi_req_t* req;
 } nccl_ofi_connection_info_t;
 /* Since this is a message on the wire, check that it has the expected size */
-_Static_assert(sizeof(nccl_ofi_connection_info_t) == 80,
-	       "Wrong size for SENDRECV connect message");
+static_assert(sizeof(nccl_ofi_connection_info_t) == 80,
+              "Wrong size for SENDRECV connect message");
 
 typedef struct nccl_net_ofi_conn_handle {
 	char ep_name[MAX_EP_ADDR];
@@ -342,6 +342,7 @@ enum nccl_net_ofi_comm_type_t {
 	NCCL_NET_OFI_SEND_COMM,
 	NCCL_NET_OFI_RECV_COMM,
 };
+
 
 /**
  * Communicator - base class for communicator structures

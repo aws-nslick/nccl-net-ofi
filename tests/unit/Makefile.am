@@ -18,7 +18,7 @@ noinst_PROGRAMS = \
 
 TESTS = $(noinst_PROGRAMS)
 
-deque_SOURCES = deque.c
-freelist_SOURCES = freelist.c
-msgbuff_SOURCES = msgbuff.c
-scheduler_SOURCES = scheduler.c
+deque_SOURCES = deque.cc
+freelist_SOURCES = freelist.cc
+msgbuff_SOURCES = msgbuff.cc
+scheduler_SOURCES = scheduler.cc

@@ -9,7 +9,7 @@
 #include <stdio.h>
 
 #include "nccl_ofi.h"
-#include "nccl_ofi_log.h"
+#include "nccl_ofi_log.hpp"
 
 static inline void logger(ncclDebugLogLevel level, unsigned long flags, const char *filefunc,
 			  int line, const char *fmt, ...)

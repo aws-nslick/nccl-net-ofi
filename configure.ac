@@ -8,7 +8,7 @@
 # Initialization
 AC_INIT([aws-ofi-nccl], [GitHub-dev], [al-ofi-nccl-team@amazon.com], , [http://github.com/aws/aws-ofi-nccl])
 AC_PREREQ([2.69])
-AC_CONFIG_SRCDIR([src/nccl_ofi_net.c])
+AC_CONFIG_SRCDIR([src/nccl_ofi_net.cc])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_MACRO_DIRS([m4])
@@ -28,8 +28,11 @@ NCCL_NET_OFI_DISTCHCK_CONFIGURE_FLAGS=
 
 # Checks for programs
 AC_PROG_CC
+AC_PROG_CXX
 m4_version_prereq([2.70], [], [AC_PROG_CC_STDC])
 AC_C_INLINE
+
+CXXFLAGS="${CXXFLAGS} -std=c++20"
 
 dnl ac_check_enable_debug will make sure AC_PROG_CC doesn't add a
 dnl bunch of debugging flags, so there's no ordering requirement
@@ -37,18 +40,6 @@ dnl between this and AC_PROG_CC.
 AS_IF([test "${ax_enable_debug}" = "no"], [CFLAGS="${CFLAGS} -O3"])
 
 CHECK_ENABLE_SANITIZER()
-
-
-# Checks for header files
-AC_HEADER_STDBOOL
-AS_IF([test "${ac_cv_header_stdbool_h}" = "no"],
-      [AC_MSG_ERROR([NCCL OFI Plugin requires stdbool.h])])
-
-AC_CHECK_HEADER([limits.h], [], [AC_MSG_ERROR([NCCL OFI Plugin rquires limits.h])])
-AC_CHECK_HEADER([stdlib.h], [], [AC_MSG_ERROR([NCCL OFI Plugin rquires stdlib.h])])
-AC_CHECK_HEADER([string.h], [], [AC_MSG_ERROR([NCCL OFI Plugin rquires string.h])])
-AC_CHECK_HEADER([unistd.h], [], [AC_MSG_ERROR([NCCL OFI Plugin rquires unistd.h])])
-
 
 # Checks for types
 AC_TYPE_SIZE_T
@@ -58,8 +49,6 @@ AC_TYPE_UINT64_T
 
 # Checks for library functions
 AC_FUNC_MALLOC
-AC_CHECK_FUNC([memset], [], [AC_MSG_ERROR([NCCL OFI Plugin requires memset function.])])
-AC_CHECK_FUNC([realpath], [], [AC_MSG_ERROR([NCCL OFI Plugin requires realpath function.])])
 AC_SEARCH_LIBS([dlopen], [dl], [], [AC_MSG_ERROR([NCCL OFI Plugin requires dlopen])])
 
 # Check for GCC builtin functions
