@@ -4,92 +4,164 @@
  */
 
 #include "config.h"
-
+#define _GNU_SOURCE
+#include <link.h>
 #include <dlfcn.h>
+#include <assert.h>
 #include <errno.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "nccl_ofi_cuda.h"
 #include "nccl_ofi_log.h"
 
-CUresult (*nccl_net_ofi_cuCtxGetCurrent)( CUcontext* pctx ) = NULL;
-CUresult (*nccl_net_ofi_cuCtxGetApiVersion)( CUcontext pctx, unsigned int *ver ) = NULL;
-CUresult (*nccl_net_ofi_cuGetProcAddress)( const char* symbol, void** pfn, int  cudaVersion, cuuint64_t flags, CUdriverProcAddressQueryResult* symbolStatus ) = NULL;
+typedef cudaError_t (*runtimeFnResolverFn_t)(const char*, void**, unsigned long long, void*);
 
-CUresult (*nccl_net_ofi_cuDriverGetVersion)(int *driverVersion) = NULL;
-CUresult (*nccl_net_ofi_cuPointerGetAttribute)(void *data, CUpointer_attribute attribute, CUdeviceptr ptr) = NULL;
-CUresult (*nccl_net_ofi_cuCtxGetDevice)(CUdevice *device) = NULL;
-CUresult (*nccl_net_ofi_cuDeviceGetCount)(int *count) = NULL;
+PFN_cuDriverGetVersion nccl_net_ofi_cuDriverGetVersion = NULL;
+PFN_cuPointerGetAttribute nccl_net_ofi_cuPointerGetAttribute = NULL;
+PFN_cuCtxGetDevice nccl_net_ofi_cuCtxGetDevice = NULL;
+PFN_cuDeviceGetCount nccl_net_ofi_cuDeviceGetCount = NULL;
+
 #if CUDA_VERSION >= 11030
-CUresult (*nccl_net_ofi_cuFlushGPUDirectRDMAWrites)(CUflushGPUDirectRDMAWritesTarget target,
-						    CUflushGPUDirectRDMAWritesScope scope) = NULL;
+PFN_cuFlushGPUDirectRDMAWrites nccl_net_ofi_cuFlushGPUDirectRDMAWrites = NULL;
 #else
 void *nccl_net_ofi_cuFlushGPUDirectRDMAWrites = NULL;
 #endif
 
+
 #define STRINGIFY(sym) # sym
 
-#define LOAD_UNVERSIONED_SYM(sym)										\
-	nccl_net_ofi_##sym = (typeof(sym) *)dlsym(cudadriver_lib, STRINGIFY(sym)); \
-	if (nccl_net_ofi_##sym == NULL) {                                          \
-		NCCL_OFI_WARN("Failed to load symbol " STRINGIFY(sym));            \
-		return -ENOTSUP;                                                    \
-	}
 
-#define LOAD_VERSIONED_SYM(sym, api_version) do { \
-	CUresult result_tmp = nccl_net_ofi_cuGetProcAddress(STRINGIFY(sym), (void**)nccl_net_ofi_##sym, api_version, CU_GET_PROC_ADDRESS_DEFAULT, NULL); \
-	if (result_tmp != CUDA_SUCCESS) {                                          \
-		NCCL_OFI_WARN("Failed to load symbol " STRINGIFY(sym));            \
-		return -ENOTSUP;                                                    \
-	} } while(0)
+/* Blindly load a symbol from lib */
+#define LOAD_DIRECT_SYM(lib, sym) do {									\
+	nccl_net_ofi_##sym = (typeof(sym) *)dlsym(lib, STRINGIFY(sym));		\
+	if (nccl_net_ofi_##sym == NULL) {									\
+		NCCL_OFI_WARN("Failed to load symbol via dlsym: "				\
+					  STRINGIFY(sym));									\
+		return -ENOTSUP;												\
+	}} while(0)
 
-int
-nccl_net_ofi_cuda_init(void)
+/* Using cuGetProcAddress, load sym at api_ver. */
+#define LOAD_DRIVER_VERSIONED_SYM(cuGetProcAddress, api_ver, sym) do {	\
+	CUresult status = cuGetProcAddress(									\
+		STRINGIFY(sym),													\
+		(void**) nccl_net_ofi_ ## sym,									\
+		api_ver, CU_GET_PROC_ADDRESS_DEFAULT, NULL);					\
+																		\
+	if (status != CUDA_SUCCESS) {										\
+		NCCL_OFI_WARN("Failed to load symbol via cuGetProcAddress: "	\
+					  STRINGIFY(sym));									\
+		return -ENOTSUP;												\
+	}} while(0)
+
+/* Using cudaGetDriverEntryPoint, load implicitly versioned sym. */
+#define LOAD_RUNTIME_VERSIONED_SYM(resolve, sym) do {					\
+	cudaError_t status = resolve(									    \
+		STRINGIFY(sym),													\
+		(void**)nccl_net_ofi_##sym,										\
+		cudaEnableDefault, NULL											\
+    );										                            \
+	if (status != cudaSuccess) {										\
+		NCCL_OFI_WARN(													\
+			"Failed to load symbol via cudaGetDriverEntryPoint: "		\
+			STRINGIFY(sym));											\
+		return -ENOTSUP;												\
+	}} while(0)
+
+static int find_cudart_dso(struct dl_phdr_info *info, size_t size, void *data)
 {
-	void *cudadriver_lib = NULL;
-	char libcuda_path[1024];
-	CUcontext ctx = NULL;
-	CUresult result = CUDA_SUCCESS;
-	unsigned int context_version = 0;
+	Dl_info addr_info = {};
+	struct link_map map = {};
+	if (strstr(info->dlpi_name, "libcudart.so") == NULL)
+		return 0;
 
-	char *nccl_cuda_path = getenv("NCCL_CUDA_PATH");
-	if (nccl_cuda_path == NULL) {
-		snprintf(libcuda_path, 1024, "%s", "libcuda.so");
-	}
-	else {
-		snprintf(libcuda_path, 1024, "%s/%s", nccl_cuda_path, "libcuda.so");
+	int status = dladdr1((void*)info->dlpi_addr, &addr_info, (void**)&map, RTLD_DL_LINKMAP);
+	if (status != 0) {
+		return 1;
 	}
 
-	(void) dlerror(); /* Clear any previous errors */
-	cudadriver_lib = dlopen(libcuda_path, RTLD_NOW);
+	void *handle = dlopen(map.l_name, RTLD_LOCAL | RTLD_NOW);
+	if (handle != NULL) {
+		*((void**)data) = dlsym(handle, "cudaGetDriverEntryPoint");
+	}
+
+	dlclose(handle);
+	return 1;
+}
+
+static int
+load_syms_runtime(runtimeFnResolverFn_t resolve)
+{
+	assert(resolve != NULL);
+	LOAD_RUNTIME_VERSIONED_SYM(resolve, cuDriverGetVersion);
+	LOAD_RUNTIME_VERSIONED_SYM(resolve, cuPointerGetAttribute);
+	LOAD_RUNTIME_VERSIONED_SYM(resolve, cuCtxGetDevice);
+	LOAD_RUNTIME_VERSIONED_SYM(resolve, cuDeviceGetCount);
+#if CUDA_VERSION >= 11030
+	LOAD_RUNTIME_VERSIONED_SYM(resolve, cuFlushGPUDirectRDMAWrites);
+#endif
+	return 0;
+}
+
+
+static int
+load_syms_driver(void)
+{
+	/* Clear any previous errors */
+	(void) dlerror();
+
+	// the driver stub from the runtime ships as `libcuda.so', so prefer
+	// the more specific `libcuda.so.1' here to avoid loading it.
+	void *cudadriver_lib = dlopen("libcuda.so.1", RTLD_NOW);
 	if (cudadriver_lib == NULL) {
 		NCCL_OFI_WARN("Failed to find CUDA Driver library: %s", dlerror());
 		return -ENOTSUP;
 	}
 
-	LOAD_UNVERSIONED_SYM(cuCtxGetCurrent);
-	LOAD_UNVERSIONED_SYM(cuCtxGetApiVersion);
-	LOAD_UNVERSIONED_SYM(cuGetProcAddress);
+	PFN_cuCtxGetCurrent nccl_net_ofi_cuCtxGetCurrent = NULL;
+	PFN_cuCtxGetApiVersion nccl_net_ofi_cuCtxGetApiVersion = NULL;
+	PFN_cuGetProcAddress nccl_net_ofi_cuGetProcAddress = NULL;
 
-	result = nccl_net_ofi_cuCtxGetCurrent(&ctx);
+	LOAD_DIRECT_SYM(cudadriver_lib, cuCtxGetCurrent);
+	LOAD_DIRECT_SYM(cudadriver_lib, cuCtxGetApiVersion);
+	LOAD_DIRECT_SYM(cudadriver_lib, cuGetProcAddress);
+
+	CUcontext ctx = NULL;
+	CUresult result = nccl_net_ofi_cuCtxGetCurrent(&ctx);
 	if (result != CUDA_SUCCESS) {
 		NCCL_OFI_WARN("Failed to get current CUDA Driver context");
 		return -ENOTSUP;
 	}
+
+	unsigned int context_version = 0;
 	result = nccl_net_ofi_cuCtxGetApiVersion(ctx, &context_version);
 	if (result != CUDA_SUCCESS) {
 		NCCL_OFI_WARN("Failed to get current CUDA Driver context version");
 		return -ENOTSUP;
 	}
 
-	LOAD_VERSIONED_SYM(cuDriverGetVersion, context_version);
-	LOAD_VERSIONED_SYM(cuPointerGetAttribute, context_version);
-	LOAD_VERSIONED_SYM(cuCtxGetDevice, context_version);
-	LOAD_VERSIONED_SYM(cuDeviceGetCount, context_version);
+	LOAD_DRIVER_VERSIONED_SYM(nccl_net_ofi_cuGetProcAddress, context_version, cuDriverGetVersion);
+	LOAD_DRIVER_VERSIONED_SYM(nccl_net_ofi_cuGetProcAddress, context_version, cuPointerGetAttribute);
+	LOAD_DRIVER_VERSIONED_SYM(nccl_net_ofi_cuGetProcAddress, context_version, cuCtxGetDevice);
+	LOAD_DRIVER_VERSIONED_SYM(nccl_net_ofi_cuGetProcAddress, context_version, cuDeviceGetCount);
 #if CUDA_VERSION >= 11030
-	LOAD_VERSIONED_SYM(cuFlushGPUDirectRDMAWrites, context_version);
+	LOAD_DRIVER_VERSIONED_SYM(nccl_net_ofi_cuGetProcAddress, context_version, cuFlushGPUDirectRDMAWrites);
 #endif
+
 	return 0;
+}
+
+int
+nccl_net_ofi_cuda_init(void)
+{
+	runtimeFnResolverFn_t func = NULL;
+	dl_iterate_phdr(find_cudart_dso, (void*)&func);
+	if (func == NULL) {
+		NCCL_OFI_WARN("libcudart.so was not found in PHDRs, falling back to loading libcuda.so.1 directly. ABI breakage possible!");
+		return load_syms_driver();
+	}
+
+	return load_syms_runtime(func);
 }
 
 
