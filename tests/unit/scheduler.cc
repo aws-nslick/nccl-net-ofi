@@ -10,8 +10,8 @@
 #include <nccl/net.h>
 
 #include "nccl_ofi_log.h"
+#include "test-common.hpp"
 #include "nccl_ofi_scheduler.h"
-#include "test-common.h"
 
 static inline int create_multiplexed(size_t size,
 		       int num_rails,

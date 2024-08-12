@@ -9,7 +9,7 @@
 
 #include "config.h"
 
-#include "test-common.h"
+#include "test-common.hpp"
 
 #define PROC_NAME_IDX(i) (i * MPI_MAX_PROCESSOR_NAME)
 
@@ -390,7 +390,7 @@ int main(int argc, char* argv[])
 	MPI_Finalize();
 	NCCL_OFI_INFO(NCCL_NET, "Test completed successfully for rank %d", rank);
 
-exit:;
+exit:
 
 	ncclResult_t close_res = ncclSuccess;
 
