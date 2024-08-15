@@ -9,7 +9,6 @@ tags
 
 src/tuner/.dirstamp
 src/tuner/*.lo
-src/tuner/*.la
 
 tests/functional/*.o
 tests/unit/*.o
@@ -73,8 +72,10 @@ m4/ltsugar.m4
 m4/ltversion.m4
 m4/lt~obsolete.m4
 
+# other
 .idea/
 .devenv/
 .direnv
-result
+*.src.rpm
 dockerbld
+result

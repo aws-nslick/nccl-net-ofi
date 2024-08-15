@@ -1,0 +1,23 @@
+#
+# Copyright (c) 2024, Amazon.com, Inc. or its affiliates. All rights reserved.
+#
+# See LICENSE.txt for license information
+#
+
+FROM base_image AS buildenv
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    apt-get update -y && apt-get install -y automake autoconf libtool libhwloc-dev
+
+FROM buildenv AS distbuilder
+ARG ACCELERATOR
+ENV ACCELERATOR=${ACCELERATOR}
+COPY ../ /proj
+WORKDIR /proj
+RUN autoreconf -ivf && \
+    ./configure --with-libfabric=/opt/amazon/efa \
+                --$(test "$ACCELERATOR" = "cuda" && echo "with-cuda=/usr/local/cuda" || echo "enable-neuron=yes") && \
+    make -j dist
+
+FROM scratch
+COPY --from=distbuilder /proj/aws-ofi-nccl*.tar.gz /
