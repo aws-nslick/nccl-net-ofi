@@ -1,0 +1,49 @@
+#
+# Copyright (c) 2024, Amazon.com, Inc. or its affiliates. All rights reserved.
+#
+# See LICENSE.txt for license information
+#
+
+FROM alpine:latest AS extractor
+RUN apk add --no-cache tar
+
+FROM extractor AS extracted
+ARG INSTALLER_PREFIX
+ENV INSTALLER_PREFIX=${INSTALLER_PREFIX}
+COPY --from=efa_installer_tarball aws-efa-installer*.tar.gz .
+RUN tar xvf *.tar.gz \
+    --wildcards "aws-efa-installer/*.txt" \
+    --wildcards "aws-efa-installer/*.sh" \
+    --wildcards "aws-efa-installer/**/${INSTALLER_PREFIX}/$(uname -m)" && \
+    rm -rf *.tar.gz
+
+FROM distro_image AS installed
+ARG ENABLE_EFA_INSTALLER_DEBUG_INFO=0
+ARG ENABLE_MPI4=0
+ARG ENABLE_MPI5=0
+
+ENV ENABLE_EFA_INSTALLER_DEBUG_INFO=${ENABLE_EFA_INSTALLER_DEBUG_INFO}
+ENV ENABLE_MPI4=${ENABLE_MPI4}
+ENV ENABLE_MPI5=${ENABLE_MPI5}
+
+RUN mkdir /aws-efa-installer
+COPY --from=extracted /aws-efa-installer /aws-efa-installer
+
+# XXX: the EFA installer script should refresh the package caches itself.
+# XXX: the EFA installer depends on util-linux, which many contianers don't have.
+RUN ( ! command -v getopt && ( apt install -y util-linux   || \
+                               dnf -y install util-linux   || \
+                               yum install -y util-linux ) || /bin/true) && \
+    ((command -v apt-get && apt-get update -y) || /bin/true ) && \
+    ((command -v yum && yum update -y ) || /bin/true ) && \
+    ((command -v dnf && dnf -y update ) || /bin/true ) && \
+    cd /aws-efa-installer && \
+    ./efa_installer.sh -y -n -l -k -g \
+        $(test "$ENABLE_EFA_INSTALLER_DEBUG_INFO" -eq "1" && echo "-d") \
+        $(test "$ENABLE_MPI4" -eq "1" && echo "--mpi openmpi4") \
+        $(test "$ENABLE_MPI5" -eq "1" && echo "--mpi openmpi5") && \
+    cd && rm -rf /aws-efa-installer && \
+    ((command -v apt-get && apt-get purge -y && apt-get clean -y) || /bin/true ) && \
+    ((command -v dnf && dnf clean all -y) || /bin/true ) && \
+    ((command -v yum && yum clean all -y) || /bin/true ) && \
+    ((command -v zypper && zypper clean ) || /bin/true )

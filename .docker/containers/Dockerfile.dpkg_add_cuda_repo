@@ -1,0 +1,11 @@
+FROM alpine:latest AS downloader
+ARG CUDA_DISTRO
+RUN wget https://developer.download.nvidia.com/compute/cuda/repos/${CUDA_DISTRO}/$(uname -m)/cuda-keyring_1.1-1_all.deb
+
+FROM base_image
+ARG CUDA_TOOLKIT_VERSION_SUFFIX
+ENV CUDA_TOOLKIT_VERSION_SUFFIX=${CUDA_TOOLKIT_VERSION_SUFFIX}
+COPY --from=downloader cuda-keyring*.deb .
+RUN apt-get update -y && apt-get install -y ca-certificates && dpkg -i cuda-keyring_1.1-1_all.deb && rm cuda-keyring*.deb && \
+    apt-get update -y && apt-get install -y cuda-cudart-dev-${CUDA_TOOLKIT_VERSION_SUFFIX} && \
+    apt-get purge -y && apt-get clean -y

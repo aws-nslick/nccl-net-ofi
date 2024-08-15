@@ -72,9 +72,10 @@ m4/ltsugar.m4
 m4/ltversion.m4
 m4/lt~obsolete.m4
 
+# other
 .idea/
 .devenv/
 .direnv
-.pre-commit-config.yaml
-result
+*.src.rpm
 dockerbld
+result

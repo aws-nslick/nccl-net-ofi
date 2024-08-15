@@ -1,0 +1,32 @@
+---
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+metadata:
+  name: ect-build
+  region: us-west-1
+  version: "1.30"
+  tags:
+    karpenter.sh/discovery: ect-build
+karpenter:
+  version: '1.0.2'
+  withSpotInterruptionQueue: true
+  createServiceAccount: true
+iam:
+  withOIDC: true
+availabilityZones:
+- us-west-1b
+- us-west-1c
+managedNodeGroups:
+- name: mgmt-ng-1
+  amiFamily: Bottlerocket
+  desiredCapacity: 1
+  minSize: 1
+  maxSize: 2
+  labels: { role: management }
+  tags:
+    nodegroup-role: management
+  instanceSelector:
+    cpuArchitecture: arm64
+    vCPUs: 8
+addons:
+- name: eks-pod-identity-agent

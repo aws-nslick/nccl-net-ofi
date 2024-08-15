@@ -1,0 +1,17 @@
+FROM distro_image
+RUN mkdir /aws-efa-installer
+COPY --from=efa_installer_contents /aws-efa-installer /aws-efa-installer
+
+# XXX: EFA installer doesn't refresh the package caches if they're unpopulated,
+# as they always are in container images.
+#
+# XXX: EFA installer depends on util-linux, which many contianers don't have.
+RUN (command -v getopt || apt install -y util-linux 2>/dev/null || \
+    dnf -y install util-linux 2>/dev/null || yum -y install util-linux 2>/dev/null) && \
+    (command -v apt-get && apt-get update -y || /bin/true ) && \
+    (! command -v yum || yum update -y ) && \
+    cd /aws-efa-installer && \
+    ./efa_installer.sh -d -y -n -l -k -g --mpi openmpi4,openmpi5 && \
+    cd && rm -rf /aws-efa-installer && (command -v apt-get && apt-get purge -y && apt-get clean -y || /bin/true ) \
+    (command -v dnf && dnf clean -y || /bin/true ) \
+    (command -v yum && yum clean -y || /bin/true )
