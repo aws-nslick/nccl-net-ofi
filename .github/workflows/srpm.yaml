@@ -53,3 +53,57 @@ jobs:
       #    path: "*.rpm"
       #    if-no-files-found: 'error'
       #    compression-level: '0'
+  makedeb:
+    runs-on: ubuntu-latest
+    matrix:
+      image:
+        - ubuntu:focal
+        - ubuntu:jammy
+        - ubuntu:noble
+        - ubuntu:oracular
+        - debian:bullseye
+        - debian:bookworm
+        - debian:stable
+        - debian:testing
+        - debian:sid
+    container:
+      image: ${{ matrix.image }}
+      options: --privileged
+    steps:
+      - run: apt install -y build-essential hwloc-dev autoconf automake
+      - run: bash -ci "$(wget -qO - 'https://shlink.makedeb.org/install')"
+      - run: curl -O https://efa-installer.amazonaws.com/aws-efa-installer-latest.tar.gz
+      - run: tar xvf ./aws-efa-installer-latest.tar.gz
+      - run: bash -c "cd aws-efa-installer && ./efa_installer.sh -y --skip-kmod --no-verify"
+      - uses: actions/checkout@v4
+      - run: makedeb -s PKGBUILD
+  debbuild:
+    runs-on: ubuntu-latest
+    matrix:
+      image:
+        - ubuntu:focal
+        - ubuntu:jammy
+        - ubuntu:noble
+        - ubuntu:oracular
+        - debian:bullseye
+        - debian:bookworm
+        - debian:stable
+        - debian:testing
+        - debian:sid
+    container:
+      image: ${{ matrix.image }}
+      options: --privileged
+    steps:
+      - run: apt install -y build-essential hwloc-dev autoconf automake
+      - run: curl -O https://efa-installer.amazonaws.com/aws-efa-installer-latest.tar.gz
+      - run: tar xvf ./aws-efa-installer-latest.tar.gz
+      - run: bash -c "cd aws-efa-installer && ./efa_installer.sh -y --skip-kmod --no-verify"
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@master
+        with:
+          name: "libnccl-net-ofi.src.rpm"
+          path: .
+      - run: ls -lart
+      - run: unzip libnccl-net-ofi.src.rpm
+      - run: mkdir -p ~/debbuild/{OTHER,SOURCES,DEBS,SDEBS,BUILD,SPECS}
+      - run: debbuild -ra *.src.rpm --define 'with_cuda 1' --define 'with_platform_aws 1'
