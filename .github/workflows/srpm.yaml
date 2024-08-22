@@ -17,3 +17,39 @@ jobs:
           path: "*.src.rpm"
           if-no-files-found: 'error'
           compression-level: '0'
+  mock-rpm:
+    runs-on: ubuntu-latest
+    needs: srpm
+    strategy:
+      matrix:
+        include:
+          - name: al2023-x86-cuda-aws
+            args: "--define 'with_cuda 1' --define 'with_neuron 0' --define 'with_platform_aws 1'"
+            accel_repo: --addrepo "https://developer.download.nvidia.com/compute/cuda/repos/amzn2023/x86_64/"
+            efa_repo: "./aws-efa-installer/RPMS/ALINUX2023/x86_64/"
+            mock: "/etc/mock/amazonlinux-2023-x86_64.cfg"
+          - name: al2023-x86-neuron-aws
+            args: "--define 'with_cuda 0' --define 'with_neuron 1' --define 'with_platform_aws 1'"
+            accel_repo: ""
+            efa_repo: "./aws-efa-installer/RPMS/ALINUX2023/x86_64/"
+            mock: "/etc/mock/amazonlinux-2023-x86_64.cfg"
+    container:
+      image: fedora:rawhide
+      options: --privileged
+    steps:
+      - run: dnf install -y mock nodejs unzip curl createrepo_c
+      - uses: actions/download-artifact@master
+        with:
+          name: "libnccl-net-ofi.src.rpm"
+          path: .
+      - run: unzip *.src.rpm.zip
+      - run: curl -O https://efa-installer.amazonaws.com/aws-efa-installer-latest.tar.gz
+      - run: tar xf ./aws-efa-installer-latest.tar.gz
+      - run: bash -c "cd ${{ matrix.efa_repo }} && createrepo_c ."
+      - run: mock --addrepo $(realpath ${{ matrix.efa_repo }}) ${{ matrix.accel_repo }} -r ${{ matrix.mock }} ${{ matrix.args }} *.src.rpm
+      #- uses: actions/upload-artifact@v4
+      #  with:
+      #    name: "RPM - ${{ matrix.name }}"
+      #    path: "*.rpm"
+      #    if-no-files-found: 'error'
+      #    compression-level: '0'
