@@ -45,10 +45,12 @@ jobs:
     steps:
       # note, do not bump to v4: https://github.com/actions/checkout/issues/1590
       - uses: actions/checkout@v3
-      - name: Fetch and Install EFA Installer Dependencies
+      - uses: actions/cache@v3
+        with:
+          key: aws-efa-installer-${{ matrix.efainstaller }}
+          path: aws-efa-installer
+      - name: Install EFA Dependencies
         run: |
-          curl -O https://efa-installer.amazonaws.com/aws-efa-installer-${{ matrix.efainstaller }}.tar.gz
-          tar -xf aws-efa-installer-*.tar.gz
           cd aws-efa-installer/RPMS/${{ matrix.efainstallerdir }}/x86_64
           find . | grep rpm$ | xargs sudo yum -y localinstall
       - name: Install hwloc, utilities.
@@ -168,10 +170,13 @@ jobs:
           packages: liblttng-ust-dev
           version: lttng
 
-      - name: Fetch and Install EFA Installer Dependencies
+      - uses: actions/cache@v3
+        with:
+          key: aws-efa-installer
+          path: aws-efa-installer
+
+      - name: Install EFA Installer Dependencies
         run: |
-          curl -O https://efa-installer.amazonaws.com/aws-efa-installer-latest.tar.gz
-          tar -xf aws-efa-installer-*.tar.gz
           pushd aws-efa-installer/
               sudo ./efa_installer.sh -y --skip-kmod
           popd
@@ -288,10 +293,12 @@ jobs:
           packages: aws-neuronx-runtime-lib
           version: neuron-packages
 
-      - name: Fetch and Install EFA Installer Dependencies
+      - uses: actions/cache@v3
+        with:
+          key: aws-efa-installer-latest
+          path: aws-efa-installer
+      - name: Install EFA Installer Dependencies
         run: |
-          curl -O https://efa-installer.amazonaws.com/aws-efa-installer-latest.tar.gz
-          tar -xf aws-efa-installer-*.tar.gz
           pushd aws-efa-installer/
               sudo ./efa_installer.sh -y --skip-kmod
           popd
@@ -383,10 +390,12 @@ jobs:
           packages: cppcheck
           version: codechecker-cppcheck
 
-      - name: Fetch and Install EFA Installer Dependencies
+      - uses: actions/cache@v3
+        with:
+          key: aws-efa-installer-latest
+          path: aws-efa-installer
+      - name: Install EFA Installer Dependencies
         run: |
-          curl -O https://efa-installer.amazonaws.com/aws-efa-installer-latest.tar.gz
-          tar -xf aws-efa-installer-*.tar.gz
           pushd aws-efa-installer/
               sudo ./efa_installer.sh -y --skip-kmod
           popd

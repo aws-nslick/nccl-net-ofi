@@ -87,8 +87,10 @@ jobs:
         with:
           name: "libnccl-net-ofi.src.rpm"
           path: .
-      - run: curl -O https://efa-installer.amazonaws.com/aws-efa-installer-latest.tar.gz
-      - run: tar xf ./aws-efa-installer-latest.tar.gz
+      - uses: actions/cache@v3
+        with:
+          key: aws-efa-installer-latest
+          path: aws-efa-installer
       - run: bash -c "cd ${{ matrix.efa_repo }} && createrepo_c ."
       - run: mock --isolation=simple --verbose --addrepo file://$(realpath ${{ matrix.efa_repo }}) ${{ matrix.accel_repo }} -r ${{ matrix.mock }} ${{ matrix.args }} *.src.rpm
       - run: rpm -qpl /var/lib/mock/**/result/*.rpm
