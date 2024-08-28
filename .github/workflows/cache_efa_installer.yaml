@@ -15,7 +15,8 @@ jobs:
           - 1.25.0
     runs-on: ubuntu-latest
     steps:
-      - run: curl -s -L https://efa-installer.amazonaws.com/aws-efa-installer-${{ matrix.version }}.tar.gz | tar xvz -
+      - run: curl -O https://efa-installer.amazonaws.com/aws-efa-installer-${{ matrix.version }}.tar.gz 
+      - run: tar xvf ./aws-efa-installer*.tar.gz
       - uses: actions/cache@v3
         with:
           key: aws-efa-installer-${{ matrix.version }}
