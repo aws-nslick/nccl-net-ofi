@@ -5,10 +5,6 @@
 #ifndef NCCL_OFI_RDMA_H_
 #define NCCL_OFI_RDMA_H_
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include <rdma/fabric.h>
 
 #include "contrib/uthash.h"
@@ -837,6 +833,9 @@ typedef struct nccl_net_ofi_rdma_device {
 #endif
 } nccl_net_ofi_rdma_device_t;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 struct nccl_net_ofi_rdma_plugin {
 	nccl_net_ofi_plugin_t base;
