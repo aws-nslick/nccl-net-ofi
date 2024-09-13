@@ -4,98 +4,90 @@
  */
 
 #include "config.h"
-
-#include <dlfcn.h>
 #include <errno.h>
-#include <stdio.h>
-
+#include <cuda_runtime_api.h>
+#include "nccl_ofi.h"
+#include "nccl_ofi_param.h"
 #include "nccl_ofi_cuda.h"
 #include "nccl_ofi_log.h"
 
-CUresult (*nccl_net_ofi_cuDriverGetVersion)(int *driverVersion) = NULL;
-CUresult (*nccl_net_ofi_cuPointerGetAttribute)(void *data, CUpointer_attribute attribute, CUdeviceptr ptr) = NULL;
-CUresult (*nccl_net_ofi_cuCtxGetDevice)(CUdevice *device) = NULL;
-CUresult (*nccl_net_ofi_cuDeviceGetCount)(int *count) = NULL;
-#if CUDA_VERSION >= 11030
-CUresult (*nccl_net_ofi_cuFlushGPUDirectRDMAWrites)(CUflushGPUDirectRDMAWritesTarget target,
-						    CUflushGPUDirectRDMAWritesScope scope) = NULL;
-#else
-void *nccl_net_ofi_cuFlushGPUDirectRDMAWrites = NULL;
-#endif
-
-#define STRINGIFY(sym) # sym
-
-#define LOAD_SYM(sym)                                                              \
-	nccl_net_ofi_##sym = (typeof(sym) *)dlsym(cudadriver_lib, STRINGIFY(sym)); \
-	if (nccl_net_ofi_##sym == NULL) {                                          \
-		NCCL_OFI_WARN("Failed to load symbol " STRINGIFY(sym));            \
-		ret = -ENOTSUP;                                                    \
-		goto error;                                                        \
-	}
-
-int
-nccl_net_ofi_cuda_init(void)
+int nccl_net_ofi_cuda_flush(void)
 {
-	int ret = 0;
-	void *cudadriver_lib = NULL;
-	char libcuda_path[1024];
-	char *nccl_cuda_path = getenv("NCCL_CUDA_PATH");
-	if (nccl_cuda_path == NULL) {
-		snprintf(libcuda_path, 1024, "%s", "libcuda.so");
-	}
-	else {
-		snprintf(libcuda_path, 1024, "%s/%s", nccl_cuda_path, "libcuda.so");
-	}
-
-	(void) dlerror(); /* Clear any previous errors */
-	cudadriver_lib = dlopen(libcuda_path, RTLD_NOW);
-	if (cudadriver_lib == NULL) {
-		NCCL_OFI_WARN("Failed to find CUDA Driver library: %s", dlerror());
-		ret = -ENOTSUP;
-		goto error;
-	}
-
-	LOAD_SYM(cuDriverGetVersion);
-	LOAD_SYM(cuPointerGetAttribute);
-	LOAD_SYM(cuCtxGetDevice);
-	LOAD_SYM(cuDeviceGetCount);
-#if CUDA_VERSION >= 11030
-	LOAD_SYM(cuFlushGPUDirectRDMAWrites);
+#ifdef __cplusplus
+	using cudaFlushGPUDirectRDMAWritesTarget::*;
+	using cudaFlushGPUDirectRDMAWritesScope::*;
 #endif
+		cudaError_t ret = cudaDeviceFlushGPUDirectRDMAWrites(
+			cudaFlushGPUDirectRDMAWritesTargetCurrentDevice,
+			cudaFlushGPUDirectRDMAWritesToOwner);
+		return (ret == cudaSuccess) ? 0 : -EPERM;
+}
 
-error:
-	return ret;
+int nccl_net_ofi_cuda_init(void)
+{
+	int driverVersion = -1;
+	int runtimeVersion = -1;
+
+	{
+		cudaError_t res = cudaDriverGetVersion(&driverVersion);
+		if (res != cudaSuccess) {
+			NCCL_OFI_WARN("Failed to query CUDA driver version.");
+			return -EINVAL;
+		}
+	}
+
+	{
+		cudaError_t res = cudaRuntimeGetVersion(&driverVersion);
+		if (res != cudaSuccess) {
+			NCCL_OFI_WARN("Failed to query CUDA runtime version.");
+			return -EINVAL;
+		}
+	}
+
+
+	NCCL_OFI_INFO(NCCL_INIT | NCCL_NET, "Using CUDA driver version %d with runtime %d", driverVersion, runtimeVersion);
+
+	if (ofi_nccl_cuda_flush_enable()) {
+		NCCL_OFI_WARN("CUDA flush enabled");
+		cuda_flush = true;
+	} else {
+		cuda_flush = false;
+	}
+
+	return 0;
 }
 
 
-int nccl_net_ofi_get_cuda_device(void *data, int *dev_id)
+int nccl_net_ofi_cuda_get_num_devices(void)
 {
-	int ret = 0;
-	int cuda_device = -1;
-	unsigned int mem_type;
-	unsigned int device_ordinal;
-	CUresult cuda_ret_mem = nccl_net_ofi_cuPointerGetAttribute(&mem_type,
-								   CU_POINTER_ATTRIBUTE_MEMORY_TYPE,
-								   (CUdeviceptr) data);
-	CUresult cuda_ret_dev = nccl_net_ofi_cuPointerGetAttribute(&device_ordinal,	
-								   CU_POINTER_ATTRIBUTE_DEVICE_ORDINAL,
-								   (CUdeviceptr) data);
+	int count = -1;
+	cudaError_t res = cudaGetDeviceCount(&count);
+	return res == cudaSuccess ? count : -1;
+}
 
-	if (cuda_ret_mem != CUDA_SUCCESS || cuda_ret_dev != CUDA_SUCCESS) {
-		ret = -ENOTSUP;
-		NCCL_OFI_WARN("Invalid buffer pointer provided");
-		goto exit;
-	}
+int nccl_net_ofi_cuda_get_active_device_idx(void)
+{
+	int index = -1;
+	cudaError_t res = cudaGetDevice(&index);
+	return res == cudaSuccess ? index : -1;
+}
 
-	if (mem_type == CU_MEMORYTYPE_DEVICE) {
-		cuda_device = device_ordinal;
-	} else {
-		ret = -EINVAL;
-		NCCL_OFI_WARN("Invalid type of buffer provided. Only device memory is expected for NCCL_PTR_CUDA type");
-	}
 
- exit:
-	*dev_id = cuda_device;
-	return ret;
+int nccl_net_ofi_get_cuda_device_for_addr(void *data, int *dev_id)
+{
+	struct cudaPointerAttributes attrs = {};
+	cudaError_t res = cudaPointerGetAttributes(&attrs, data);
+	if (res != cudaSuccess)
+		return -EINVAL;
+
+	switch (attrs.type) {
+		case cudaMemoryTypeDevice:
+			*dev_id = attrs.device;
+			return 0;
+		default:
+			NCCL_OFI_WARN("Invalid buffer pointer provided");
+			*dev_id = -1;
+			return -EINVAL;
+	};
 }
 

@@ -52,8 +52,8 @@ if ENABLE_NEURON
 else
   lib_LTLIBRARIES = libnccl-net.la
   libnccl_net_la_SOURCES =
-  libnccl_net_la_LIBADD = libinternal_net_plugin.la
-  libnccl_net_la_LDFLAGS = -module -avoid-version
+  libnccl_net_la_LIBADD = libinternal_net_plugin.la $(CUDA_LIBS)
+  libnccl_net_la_LDFLAGS = -module -avoid-version $(CUDA_LDFLAGS)
 endif
 
 

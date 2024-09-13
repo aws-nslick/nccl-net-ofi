@@ -107,11 +107,6 @@ int main(int argc, char* argv[])
 	cuda_dev = local_rank;
 	NCCL_OFI_TRACE(NCCL_NET, "Using CUDA device %d for memory allocation", cuda_dev);
 
-	CUDACHECK(cuInit(0));
-	CUcontext context;
-	CUDACHECK(cuCtxCreate(&context, CU_CTX_SCHED_SPIN|CU_CTX_MAP_HOST, cuda_dev));
-	CUDACHECK(cuCtxSetCurrent(context));
-
 	/* Get external Network from NCCL-OFI library */
 	extNet = get_extNet();
 	if (extNet == NULL) {
