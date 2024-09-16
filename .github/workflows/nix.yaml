@@ -1,0 +1,39 @@
+name: Quick CI Builds
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "configure.ac"
+      - "Makefile.am"
+      - "autogen.sh"
+      - "include/**"
+      - "m4/**"
+      - "src/**"
+      - "tests/**"
+      - ".github/workflows/nix*.yaml"
+      - "flake.nix"
+      - "flake.lock"
+      - ".nix/**"
+
+jobs:
+  nix-build:
+    name: Build Many Combinations.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: DeterminateSystems/nix-installer-action@main
+        with:
+          determinate: true
+          extra-conf: |
+            experimental-features = nix-command flakes auto-allocate-uids
+            extra-substituters = https://nix-community.cachix.org https://cuda-maintainers.cachix.org
+            extra-trusted-public-keys = nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs= cuda-maintainers.cachix.org-1:0dq3bujKpuEPMCX6U4WylrUDZ9JyUG0VpVZa7CNfq5E=
+      - uses: DeterminateSystems/magic-nix-cache-action@main
+      - name: Build and Cache Dependencies
+        run: |
+          nix --accept-flake-config build --impure '.#checks.x86_64-linux.default'
+          # We want to use the cache here, but we don't want to cache this
+          # specific build, so purge the cache now to prevent it from being
+          # pushed on cleanup.
+          nix-collect-garbage -d
