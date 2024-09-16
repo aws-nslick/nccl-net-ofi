@@ -1,0 +1,208 @@
+{
+  "nodes": {
+    "flake-utils": {
+      "inputs": {
+        "systems": [
+          "systems"
+        ]
+      },
+      "locked": {
+        "lastModified": 1710146030,
+        "narHash": "sha256-SZ5L6eA7HJ/nmkzGG7/ISclqe6oZdOZTNoesiInkXPQ=",
+        "owner": "numtide",
+        "repo": "flake-utils",
+        "rev": "b1d9ab70662946ef0850d488da1c9019f3a9752a",
+        "type": "github"
+      },
+      "original": {
+        "owner": "numtide",
+        "repo": "flake-utils",
+        "type": "github"
+      }
+    },
+    "gdrcopy": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1720403983,
+        "narHash": "sha256-vK13tpyVHEQuI2x717XtgY/ByvF1Sx3LPcLsXnmcuDU=",
+        "owner": "NVIDIA",
+        "repo": "gdrcopy",
+        "rev": "1366e20d140c5638fcaa6c72b373ac69f7ab2532",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NVIDIA",
+        "repo": "gdrcopy",
+        "type": "github"
+      }
+    },
+    "hwloc": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1725633129,
+        "narHash": "sha256-feXQIEDEsTlbwV17/qAOUMjh4d1b5oXeEZoE2B+Q6w8=",
+        "owner": "open-mpi",
+        "repo": "hwloc",
+        "rev": "abd749327f3f27567034f19e7bd3e3a77f4e4296",
+        "type": "github"
+      },
+      "original": {
+        "owner": "open-mpi",
+        "ref": "v2.x",
+        "repo": "hwloc",
+        "type": "github"
+      }
+    },
+    "libfabric": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1726518975,
+        "narHash": "sha256-cNMvPrKcKtjv4C53sqg70+55PLp717eu2gPdMr4wDPI=",
+        "owner": "ofiwg",
+        "repo": "libfabric",
+        "rev": "3d7bc021c8b4d7b7adfca7c17bb71e8cfa6463db",
+        "type": "github"
+      },
+      "original": {
+        "owner": "ofiwg",
+        "ref": "main",
+        "repo": "libfabric",
+        "type": "github"
+      }
+    },
+    "nccl": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1726523257,
+        "narHash": "sha256-DlMxlLO2F079fBkhORNPVN/ASYiVIRfLJw7bDoiClHw=",
+        "owner": "NVIDIA",
+        "repo": "nccl",
+        "rev": "1a16f427507cb985123e7565874f57b77a1ba2df",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NVIDIA",
+        "repo": "nccl",
+        "type": "github"
+      }
+    },
+    "nccl-tests": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1722376734,
+        "narHash": "sha256-36Xk/CNr8uwPoqop3zXm2SzWpZUjqXy6M9uYRKIOu3Y=",
+        "owner": "NVIDIA",
+        "repo": "nccl-tests",
+        "rev": "9d26b8422ba76c098df996b96e13b8ddf3a71165",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NVIDIA",
+        "repo": "nccl-tests",
+        "type": "github"
+      }
+    },
+    "nix-github-actions": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1720066371,
+        "narHash": "sha256-uPlLYH2S0ACj0IcgaK9Lsf4spmJoGejR9DotXiXSBZQ=",
+        "owner": "nix-community",
+        "repo": "nix-github-actions",
+        "rev": "622f829f5fe69310a866c8a6cd07e747c44ef820",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nix-community",
+        "repo": "nix-github-actions",
+        "type": "github"
+      }
+    },
+    "nixpkgs": {
+      "locked": {
+        "lastModified": 1726481836,
+        "narHash": "sha256-MWTBH4dd5zIz2iatDb8IkqSjIeFum9jAqkFxgHLdzO4=",
+        "rev": "20f9370d5f588fb8c72e844c54511cab054b5f40",
+        "revCount": 682060,
+        "type": "tarball",
+        "url": "https://api.flakehub.com/f/pinned/DeterminateSystems/nixpkgs-weekly/0.1.682060%2Brev-20f9370d5f588fb8c72e844c54511cab054b5f40/0191fe7a-9a92-742d-80d8-41f210baba7c/source.tar.gz"
+      },
+      "original": {
+        "type": "tarball",
+        "url": "https://flakehub.com/f/DeterminateSystems/nixpkgs-weekly/0.1.678339.tar.gz"
+      }
+    },
+    "openmpi": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1725999768,
+        "narHash": "sha256-63YPwKc/8a+0aomlQPYnUpO6uB3VNPnxQ2omPwveGYY=",
+        "ref": "main",
+        "rev": "adee1a4bba9de414002b777df8b466b0f6133cad",
+        "revCount": 34498,
+        "submodules": true,
+        "type": "git",
+        "url": "https://github.com/open-mpi/ompi.git"
+      },
+      "original": {
+        "ref": "main",
+        "submodules": true,
+        "type": "git",
+        "url": "https://github.com/open-mpi/ompi.git"
+      }
+    },
+    "rdma-core": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1726471809,
+        "narHash": "sha256-uHerTWawF38LX4Dr8+2NH4mPpTcihmbV1fAQRy1EP+Q=",
+        "owner": "linux-rdma",
+        "repo": "rdma-core",
+        "rev": "27b9ef34cd9272c656dca4d0d5d65a34b17a0150",
+        "type": "github"
+      },
+      "original": {
+        "owner": "linux-rdma",
+        "ref": "master",
+        "repo": "rdma-core",
+        "type": "github"
+      }
+    },
+    "root": {
+      "inputs": {
+        "flake-utils": "flake-utils",
+        "gdrcopy": "gdrcopy",
+        "hwloc": "hwloc",
+        "libfabric": "libfabric",
+        "nccl": "nccl",
+        "nccl-tests": "nccl-tests",
+        "nix-github-actions": "nix-github-actions",
+        "nixpkgs": "nixpkgs",
+        "openmpi": "openmpi",
+        "rdma-core": "rdma-core",
+        "systems": "systems"
+      }
+    },
+    "systems": {
+      "locked": {
+        "lastModified": 1689347949,
+        "narHash": "sha256-12tWmuL2zgBgZkdoB6qXZsgJEH9LR3oUgpaQq2RbI80=",
+        "owner": "nix-systems",
+        "repo": "default-linux",
+        "rev": "31732fcf5e8fea42e59c2488ad31a0e651500f68",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nix-systems",
+        "repo": "default-linux",
+        "type": "github"
+      }
+    }
+  },
+  "root": "root",
+  "version": 7
+}

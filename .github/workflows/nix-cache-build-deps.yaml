@@ -1,0 +1,27 @@
+name: Cache Nix CI Dependencies
+
+on:
+  workflow_dispatch:
+  pull-request:
+    paths: ['.nix/*', 'flake.nix', 'flake.lock']
+  push:
+    branches: ['master', 'v*']
+    paths: ['.nix/*', 'flake.nix', 'flake.lock']
+
+jobs:
+  build-and-cache-dependencies:
+    name: Build and Cache Dependencies
+    steps:
+      - uses: actions/checkout@v4
+      - uses: DeterminateSystems/nix-installer-action@main
+        with:
+          determinate: true
+          extra-conf: |
+            experimental-features = nix-command flakes auto-allocate-uids
+            extra-substituters = https://nix-community.cachix.org https://cuda-maintainers.cachix.org
+            extra-trusted-public-keys = nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs= cuda-maintainers.cachix.org-1:0dq3bujKpuEPMCX6U4WylrUDZ9JyUG0VpVZa7CNfq5E=
+      - uses: DeterminateSystems/magic-nix-cache-action@main
+      - name: Build and Cache Dependencies
+        run: |
+          export NIXPKGS_ALLOW_UNFREE=1
+          nix build --impure -L '.#checks.x86_64-linux.deps'
