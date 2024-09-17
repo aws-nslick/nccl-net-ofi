@@ -20,7 +20,9 @@ int main(int argc, char* argv[])
 	int buffer_type = NCCL_PTR_HOST;
 
 	/* Plugin defines */
-	int ndev, cuda_dev;
+	int ndev;
+	/* optimized out w/o trace prints enabled */
+	MAYBE_UNUSED("optimized out when NCCL_OFI_TRACE is empty") int cuda_dev;
 	nccl_net_ofi_send_comm_t *sComm = NULL;
 	nccl_net_ofi_listen_comm_t *lComm = NULL;
 	nccl_net_ofi_recv_comm_t *rComm = NULL;
