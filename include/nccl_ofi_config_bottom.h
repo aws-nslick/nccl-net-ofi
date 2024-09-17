@@ -29,6 +29,9 @@
 #define container_of(ptr, type, field) \
 	((type *) ((char *)ptr - offsetof(type, field)))
 #endif
+
+#define MAYBE_UNUSED(reason) __attribute__((unused))
+
 /* end of copied libfabric macros */
 
 /* Workaround for platforms without memfd_create */
