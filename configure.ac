@@ -140,7 +140,7 @@ AS_IF([test "${enable_picky_compiler}" != "no"],
 
 AC_ARG_ENABLE([werror],
    [AS_HELP_STRING([--enable-werror], [Enable setting -Werror.  Off by default, unless building from Git tree.])])
-werror_flags="-Werror"
+werror_flags="-Werror -Wno-unused-command-line-argument"
 AS_IF([test -d "${srcdir}/.git" -a -z "${enable_werror}"],
       [AC_MSG_NOTICE([Found .git directory.  Adding ${werror_flags} to CFLAGS.])
        CFLAGS="${CFLAGS} ${werror_flags}"],
