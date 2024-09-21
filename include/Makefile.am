@@ -34,4 +34,5 @@ noinst_HEADERS = \
 	tracing_impl/nvtx.h \
 	internal/tuner/nccl_defaults.h \
 	nccl_ofi_platform.h \
+    nccl_ofi_dmabuf_debug.h \
 	nccl_ofi_ep_addr_list.h

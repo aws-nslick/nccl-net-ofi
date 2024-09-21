@@ -27,6 +27,7 @@
 #include "nccl_ofi_math.h"
 #include "nccl_ofi_pthread.h"
 #include "nccl_ofi_dmabuf.h"
+#include "nccl_ofi_dmabuf_debug.h"
 #include "nccl_ofi_mr.h"
 
 static inline int get_properties(nccl_net_ofi_device_t *base_dev,
@@ -760,6 +761,7 @@ static int reg_mr_base_comm(nccl_net_ofi_comm_t *base_comm,
 			    nccl_ofi_mr_ckey_ref ckey,
 			    int type, void **mhandle)
 {
+	bool cache_hit = false;
 	/* Retrieve and validate endpoint */
 	nccl_net_ofi_sendrecv_ep_t *ep =
 		(nccl_net_ofi_sendrecv_ep_t *)base_comm->ep;
@@ -795,6 +797,7 @@ static int reg_mr_base_comm(nccl_net_ofi_comm_t *base_comm,
 	ret_handle = nccl_ofi_mr_cache_lookup_entry(mr_cache, ckey);
 	if (ret_handle) {
 		/* Cache hit */
+		cache_hit = true;
 		goto unlock;
 	}
 	/* Cache miss */
@@ -824,6 +827,10 @@ static int reg_mr_base_comm(nccl_net_ofi_comm_t *base_comm,
 
 unlock:
 	nccl_net_ofi_mutex_unlock(&mr_cache->lock);
+	if (!cache_hit && ret_handle != NULL) {
+		nccl_ofi_add_dmabuf_debug_label(ckey, device->base.name);
+	}
+
 exit:
 	*mhandle = ret_handle;
 	return ret;

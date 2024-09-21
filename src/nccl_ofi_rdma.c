@@ -27,6 +27,7 @@
 #include "nccl_ofi_pthread.h"
 #include "nccl_ofi_platform.h"
 #include "nccl_ofi_dmabuf.h"
+#include "nccl_ofi_dmabuf_debug.h"
 #include "nccl_ofi_mr.h"
 
 /* Message buffer size -- maximum span of simultaneous inflight messages */
@@ -2765,6 +2766,7 @@ static int reg_mr_ep(nccl_net_ofi_rdma_ep_t *ep,
 		     nccl_net_ofi_rdma_mr_handle_t **mhandle)
 {
 	int ret = 0;
+	bool cache_hit = false;
 	nccl_net_ofi_rdma_mr_handle_t *ret_handle = NULL;
 	*mhandle = NULL;
 
@@ -2785,6 +2787,7 @@ static int reg_mr_ep(nccl_net_ofi_rdma_ep_t *ep,
 			nccl_ofi_mr_cache_lookup_entry(mr_cache, ckey);
 
 		if (ret_handle) {
+			cache_hit = true;
 			/* Cache hit */
 			goto exit;
 		}
@@ -2813,6 +2816,10 @@ static int reg_mr_ep(nccl_net_ofi_rdma_ep_t *ep,
 exit:
 	if (mr_cache) {
 		nccl_net_ofi_mutex_unlock(&mr_cache->lock);
+	}
+
+	if (!cache_hit && ret_handle != NULL) {
+		nccl_ofi_add_dmabuf_debug_label(ckey, device->base.name);
 	}
 
 	*mhandle = ret_handle;

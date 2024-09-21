@@ -234,6 +234,17 @@ OFI_NCCL_PARAM_INT(disable_gdr_required_check, "DISABLE_GDR_REQUIRED_CHECK", 0);
 OFI_NCCL_PARAM_INT(disable_dmabuf, "DISABLE_DMABUF", 0);
 
 /*
+ * If DMABUF is used and this option is set, the plugin will attempt to use the
+ * linux ioctl "DMA_BUF_SET_NAME" to label file descriptors as they pass through
+ * the plugin, associating them with the device.
+ *
+ * See
+ *   https://docs.kernel.org/driver-api/dma-buf.html#dma-buf-statistics
+ * for further details.
+ */
+OFI_NCCL_PARAM_INT(debug_dmabuf_labels, "DEBUG_DMABUF_LABELS", 0);
+
+/*
  * Maximum size of a message in bytes before message is multiplexed
  */
 OFI_NCCL_PARAM_UINT(round_robin_threshold, "ROUND_ROBIN_THRESHOLD", (256 * 1024));
