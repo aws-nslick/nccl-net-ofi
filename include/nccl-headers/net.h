@@ -5,6 +5,7 @@
 #ifndef NCCL_HEADERS_NET_H
 #define NCCL_HEADERS_NET_H
 
+// IWYU pragma: begin_exports
 #if HAVE_CUDA
 #include "nccl-headers/nvidia/net.h"
 #elif HAVE_NEURON
@@ -12,5 +13,6 @@
 #else
 #error "Neither CUDA nor Neuron support is available"
 #endif
+// IWYU pragma: end_exports
 
 #endif

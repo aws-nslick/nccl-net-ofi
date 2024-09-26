@@ -2,6 +2,8 @@
  * Copyright (c) 2018-2024 Amazon.com, Inc. or its affiliates. All rights reserved.
  */
 
+// IWYU pragma: private, include "public.h"
+
 #ifndef NCCL_OFI_CONFIG_BOTTOM_H
 #define NCCL_OFI_CONFIG_BOTTOM_H
 

@@ -25,7 +25,9 @@ AH_TOP([/*
 
 ])
 AH_BOTTOM([
+// IWYU pragma: begin_exports
 #include "nccl_ofi_config_bottom.h"
+// IWYU pragma: end_exports
 #endif /* NCCL_OFI_CONFIG_H */
 ])
 
