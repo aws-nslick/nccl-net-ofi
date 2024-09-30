@@ -267,14 +267,11 @@ OFI_NCCL_PARAM_INT(net_latency, "NET_LATENCY", -1);
  * tweak defaults from the platform file, but this fits our needs for
  * now.
  */
-OFI_NCCL_PARAM_UINT(eager_max_size,
-                    "EAGER_MAX_SIZE",
 #if HAVE_NEURON
-                    0
+OFI_NCCL_PARAM_UINT(eager_max_size, "EAGER_MAX_SIZE", 0);
 #else
-                    8192
+OFI_NCCL_PARAM_UINT(eager_max_size, "EAGER_MAX_SIZE", 8192);
 #endif
-);
 
 /*
  * Decide whether or not mutexes should default to errorcheck mode.
