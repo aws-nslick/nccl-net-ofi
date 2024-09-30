@@ -16,7 +16,9 @@
 int main(int argc, char* argv[])
 {
 	ncclResult_t res = ncclSuccess;
-	int rank, proc_name_len, num_ranks = 0, local_rank = 0, peer_rank = 0;
+	int rank, proc_name_len, num_ranks = 0, peer_rank = 0;
+	/* Unused when trace prints are not enabled. */
+	[[maybe_unused]] int local_rank = 0;
 	int buffer_type = NCCL_PTR_HOST;
 	test_nccl_properties_t props = {};
 
