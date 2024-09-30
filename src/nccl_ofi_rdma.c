@@ -7190,7 +7190,7 @@ static nccl_net_ofi_rdma_device_t *nccl_net_ofi_rdma_device_create(
 		/* The provider may return support for a larger key size. Use
 		 * the size requested by the user to allow them to limit the
 		 * size of the mr_keys table. */
-		ret = nccl_ofi_idpool_init(&device->key_pool, (size_t)(1 << (ofi_nccl_mr_key_size() * 8)));
+		ret = nccl_ofi_idpool_init(&device->key_pool, ((size_t)1 << (ofi_nccl_mr_key_size() * 8)));
 	} else {
 		/* Mark key pool as not in use */
 		ret = nccl_ofi_idpool_init(&device->key_pool, 0);
