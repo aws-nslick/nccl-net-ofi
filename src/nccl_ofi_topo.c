@@ -434,9 +434,6 @@ static int set_userdata_to_root(hwloc_obj_t node,
 	/* Walk upwards to the root */
 	while (node) {
 		if (!node->userdata) {
-			/* Abort when a node is reached that already stores user data */
-			if (node->userdata) break;
-
 			user_data = nccl_ofi_get_user_data(data_iter);
 			if (!user_data) {
 				NCCL_OFI_WARN("Failed to access user data of data_iter");
