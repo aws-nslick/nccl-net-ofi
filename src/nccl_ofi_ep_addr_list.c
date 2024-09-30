@@ -191,7 +191,8 @@ int nccl_ofi_ep_addr_list_delete(nccl_ofi_ep_addr_list_t *ep_list, nccl_net_ofi_
 	int ret = 0;
 	nccl_net_ofi_mutex_lock(&ep_list->mutex);
 
-	ep_pair_list_elem_t *ep_pair, *ep_pair_tmp;
+	ep_pair_list_elem_t *ep_pair = NULL;
+	ep_pair_list_elem_t *ep_pair_tmp = NULL;
 	DL_FOREACH_SAFE(ep_list->ep_pair_list, ep_pair, ep_pair_tmp) {
 		if (ep_pair->ep == ep) {
 			delete_ep_list_entry(ep_list, ep_pair);
@@ -211,7 +212,8 @@ void nccl_ofi_ep_addr_list_fini(nccl_ofi_ep_addr_list_t *ep_list)
 {
 	/* Delete all */
 	{
-		ep_pair_list_elem_t *ep_pair, *ep_pair_tmp;
+		ep_pair_list_elem_t *ep_pair = NULL;
+		ep_pair_list_elem_t *ep_pair_tmp = NULL;
 		DL_FOREACH_SAFE(ep_list->ep_pair_list, ep_pair, ep_pair_tmp) {
 			delete_ep_list_entry(ep_list, ep_pair);
 		}
