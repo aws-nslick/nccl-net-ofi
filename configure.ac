@@ -249,6 +249,12 @@ AS_IF([test -d "${srcdir}/.git" -a -z "${enable_werror}"],
        CXXFLAGS="${werror_flags} ${CXXFLAGS} "
        CFLAGS="${werror_flags} ${CFLAGS} "])
 
+AC_ARG_ENABLE([cxx],
+   [AS_HELP_STRING([--enable-cxx], [(Developer) Treat all C code as C++ source. Off by default.])])
+AS_IF([test "${enable_cxx}" = "yes"],
+      [AC_MSG_NOTICE([Treating all files as CXX files.])
+       CFLAGS="-x c++ ${CXXFLAGS}"])
+
 AC_SUBST([NCCL_NET_OFI_DISTCHCK_CONFIGURE_FLAGS])
 
 AC_CONFIG_FILES([Makefile
