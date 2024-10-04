@@ -228,6 +228,11 @@ dnl enable GCC's static analyzer
 ADD_PICKY_FLAGS([-fanalyzer])
 dnl todo: clang-sa flags
 
+dnl if a function does not modify its arguments, tell the compiler that so it
+dnl can optimize across it by marking it as pure. When the compiler is confused
+dnl about whether it's pure, emit a warning.
+ADD_PICKY_FLAGS([-Wsuggest-attribute=pure])
+
 AC_ARG_ENABLE([picky-compiler],
    [AS_HELP_STRING([--disable-picky-compiler], [Disable adding picky compiler flags.])])
 AS_IF([test "${enable_picky_compiler}" != "no"],

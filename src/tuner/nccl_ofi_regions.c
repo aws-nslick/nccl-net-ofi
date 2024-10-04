@@ -136,6 +136,7 @@ static inline double distance(nccl_ofi_tuner_point_t x,
  * 		-1 for outside
  * 		0 for on edge.
  */
+__attribute__((pure))
 int is_inside_region(nccl_ofi_tuner_point_t point, nccl_ofi_tuner_region_t *region)
 {
 	assert(region->num_vertices > 1);
