@@ -987,7 +987,7 @@ int nccl_ofi_topo_group(nccl_ofi_topo_t *topo)
  * @return	NUMA node topology node, if found
  *		NULL, otherwise
  */
-static hwloc_obj_t get_numa_mem_child(hwloc_obj_t node)
+__attribute__((pure)) static hwloc_obj_t get_numa_mem_child(hwloc_obj_t node)
 {
 	hwloc_obj_t child = NULL;
 

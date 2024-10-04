@@ -220,6 +220,7 @@ out:
 	return ret;
 }
 
+__attribute__((pure))
 static int nccl_ofi_mr_cache_lookup_handle(nccl_ofi_mr_cache_t *cache,
 					   void *handle)
 {

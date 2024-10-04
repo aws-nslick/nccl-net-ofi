@@ -508,6 +508,7 @@ static int register_rail_mr_buffer(struct fid_domain *domain,
 /*
  * @brief	Calculate length of libfabric NIC info list
  */
+__attribute__((pure))
 static inline int ofi_info_list_length(struct fi_info *info_list)
 {
 	int length = 0;
