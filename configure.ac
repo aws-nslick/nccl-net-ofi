@@ -233,6 +233,10 @@ dnl can optimize across it by marking it as pure. When the compiler is confused
 dnl about whether it's pure, emit a warning.
 ADD_PICKY_FLAGS([-Wsuggest-attribute=pure])
 
+dnl use 123.456L for a double, use 123.456f for a float, and don't allow it to
+dnl be ambiguous.
+ADD_PICKY_FLAGS([-Wunsuffixed-float-constants])
+
 AC_ARG_ENABLE([picky-compiler],
    [AS_HELP_STRING([--disable-picky-compiler], [Disable adding picky compiler flags.])])
 AS_IF([test "${enable_picky_compiler}" != "no"],

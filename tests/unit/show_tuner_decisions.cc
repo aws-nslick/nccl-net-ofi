@@ -30,7 +30,7 @@ int main(int argc, const char **argv)
 				return 1;
 			}
 
-			for (size_t nmibytes = 1; nmibytes <= 32 * 1024; nmibytes <<= 1) {
+			for (size_t nmibytes = 1; nmibytes <= 32ULL * 1024; nmibytes <<= 1) {
 				int algorithm = NCCL_ALGO_UNDEF;
 				int protocol = NCCL_ALGO_UNDEF;
 
@@ -42,7 +42,7 @@ int main(int argc, const char **argv)
 				/* Init cost table with large values */
 				for (int a = 0; a < NCCL_NUM_ALGORITHMS; a++) {
 					for (int p = 0; p < NCCL_NUM_PROTOCOLS; p++) {
-						collCostTable[a][p] = 3600000000.0;  // 1 hour;
+						collCostTable[a][p] = 3600000000.0f;  // 1 hour;
 					}
 				}
 
@@ -58,13 +58,13 @@ int main(int argc, const char **argv)
 				}
 
 				/* Find the combination with minimum cost */
-				float minTime = 3600000000.0;
+				float minTime = 3600000000.0f;
 				for (int a = 0; a < NCCL_NUM_ALGORITHMS; a++) {
 					for (int p = 0; p < NCCL_NUM_PROTOCOLS; p++) {
 						if (collCostTable[a][p] == NCCL_ALGO_PROTO_IGNORE) {
 							continue;
 						}
-						if (collCostTable[a][p] >= 0.0 && collCostTable[a][p] < minTime) {
+						if (collCostTable[a][p] >= 0.0f && collCostTable[a][p] < minTime) {
 							algorithm = a;
 							protocol = p;
 							minTime = collCostTable[a][p];

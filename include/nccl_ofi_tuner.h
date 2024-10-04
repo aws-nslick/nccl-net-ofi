@@ -18,12 +18,12 @@
 /* Maximum number of ranks with which the tuner can deal.
  * Above this value, it will fall back to NCCL's tuner.
  */
-#define TUNER_MAX_RANKS        1024.0 * 1024
+#define TUNER_MAX_RANKS        1024.0f * 1024
 
 /* Maximum message size with which the tuner can deal.
  * Above this value, it will fall back to NCCL's tuner.
  */
-#define TUNER_MAX_SIZE         100.0 * 1024 * 1024 * 1024
+#define TUNER_MAX_SIZE         100.0f * 1024 * 1024 * 1024
 
 typedef struct nccl_ofi_tuner_model_dims {
 	/* communicator size */

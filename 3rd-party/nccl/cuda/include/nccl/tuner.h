@@ -40,7 +40,7 @@ typedef enum {
 #define NCCL_PROTO_LL128 1
 #define NCCL_PROTO_SIMPLE 2
 
-#define NCCL_ALGO_PROTO_IGNORE -1.0
+#define NCCL_ALGO_PROTO_IGNORE   (-1.0f)
 
 // API to be implemented by external tuner
 typedef struct {

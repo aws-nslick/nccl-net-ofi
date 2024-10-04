@@ -144,7 +144,7 @@ int is_inside_region(nccl_ofi_tuner_point_t point, nccl_ofi_tuner_region_t *regi
 	size_t i, k;
 	nccl_ofi_tuner_point_t *pv;
 	double min_x, max_x, min_y, max_y;
-	const double eps = 1e-10;
+	const double eps = 1e-10f;
 
 	for (i = 0; i < region->num_vertices; i++) {
 		k = (i + 1) % region->num_vertices;
@@ -182,7 +182,7 @@ int is_inside_region(nccl_ofi_tuner_point_t point, nccl_ofi_tuner_region_t *regi
 	}
 
 	/* Pick a point far enough to be outside any polygon */
-	nccl_ofi_tuner_point_t e = {.x = 2.0 * TUNER_MAX_SIZE, .y = 2.0 * TUNER_MAX_RANKS};
+	nccl_ofi_tuner_point_t e = {.x = 2.0f * TUNER_MAX_SIZE, .y = 2.0f * TUNER_MAX_RANKS};
 
 	int crosses = 0;
 	int intersectResult = -1;
