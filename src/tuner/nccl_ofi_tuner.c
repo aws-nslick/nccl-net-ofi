@@ -368,7 +368,7 @@ void nccl_ofi_tuner_disable(float **collCostTable, int algorithm, int protocol, 
 {
 	float(*table)[NCCL_NUM_PROTOCOLS] = (float(*)[NCCL_NUM_PROTOCOLS])collCostTable;
 
-	float long_time = 3600000000.0;  // 1 hour
+	const float long_time = 3600000000.0f;  // 1 hour
 	int a = 0, p = 0;
 	if (algorithm != NCCL_ALGO_UNDEF && protocol == NCCL_PROTO_UNDEF) {
 		a = algorithm;
@@ -428,15 +428,15 @@ static ncclResult_t nccl_ofi_tuner_get_coll_info(void *context,
 
 		in_out = is_inside_region(p, &nccl_ofi_tuner_ctx->regions[collType][i]);
 		if (in_out >= 0) {
-			table[algorithm][protocol] = 0.0;
+			table[algorithm][protocol] = 0.0f;
 
 			NCCL_OFI_INFO(NCCL_TUNING,
-				      "Choosing algo %d proto %d with cost %.8f µsecs for coll %d size %ld.",
-				      algorithm,
-				      protocol,
-				      table[algorithm][protocol],
-				      collType,
-				      nBytes);
+			              "Choosing algo %d proto %d with cost %.8lf µsecs for coll %d size %ld.",
+			              algorithm,
+			              protocol,
+			              (double)table[algorithm][protocol],
+			              collType,
+			              nBytes);
 		}
 	}
 
@@ -478,10 +478,10 @@ static ncclResult_t nccl_ofi_tuner_get_coll_info_v2(
 			*protocol = nccl_ofi_tuner_ctx->regions[collType][i].protocol;
 
 			NCCL_OFI_INFO(NCCL_TUNING,
-				      "Choosing algo %d proto %d with cost %.8f µsecs for coll %d size %ld.",
+				      "Choosing algo %d proto %d with cost %.8Lf µsecs for coll %d size %ld.",
 				      *algorithm,
 				      *protocol,
-				      0.0,
+				      0.0l,
 				      collType,
 				      nBytes);
 		}
