@@ -224,7 +224,7 @@ static int threshold_scheduler_fini(nccl_net_ofi_scheduler_t *scheduler_p)
  * @return	0, on success
  *		non-zero, on others
  */
-int scheduler_init(int num_rails, nccl_net_ofi_scheduler_t *scheduler)
+static inline int scheduler_init(int num_rails, nccl_net_ofi_scheduler_t *scheduler)
 {
 	int ret = 0;
 

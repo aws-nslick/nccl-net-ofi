@@ -14,7 +14,7 @@
 #include "test-common.h"
 #include "nccl_ofi_scheduler.h"
 
-int create_multiplexed(size_t size,
+static inline int create_multiplexed(size_t size,
 		       int num_rails,
 		       size_t align,
 		       nccl_net_ofi_schedule_t **schedule_p)
@@ -30,7 +30,7 @@ int create_multiplexed(size_t size,
 	return 0;
 }
 
-int verify_xfer_info(nccl_net_ofi_xfer_info_t *xfer, nccl_net_ofi_xfer_info_t *ref_xfer, int xfer_id)
+static inline int verify_xfer_info(nccl_net_ofi_xfer_info_t *xfer, nccl_net_ofi_xfer_info_t *ref_xfer, int xfer_id)
 {
 	int ret = ref_xfer->rail_id != xfer->rail_id
 		|| ref_xfer->offset != xfer->offset
@@ -49,7 +49,7 @@ int verify_xfer_info(nccl_net_ofi_xfer_info_t *xfer, nccl_net_ofi_xfer_info_t *r
 	return ret;
 }
 
-int verify_schedule(nccl_net_ofi_schedule_t *schedule, nccl_net_ofi_schedule_t *ref_schedule)
+static inline int verify_schedule(nccl_net_ofi_schedule_t *schedule, nccl_net_ofi_schedule_t *ref_schedule)
 {
 	int ret = 0;
 
@@ -72,7 +72,7 @@ int verify_schedule(nccl_net_ofi_schedule_t *schedule, nccl_net_ofi_schedule_t *
 	return ret;
 }
 
-int test_multiplexing_schedule()
+static inline int test_multiplexing_schedule()
 {
 	nccl_net_ofi_schedule_t *schedule = NULL;
 	nccl_net_ofi_schedule_t *ref_schedule = (nccl_net_ofi_schedule_t *)malloc(
@@ -299,7 +299,7 @@ int test_multiplexing_schedule()
 	return 0;
 }
 
-int test_threshold_scheduler()
+static inline int test_threshold_scheduler()
 {
 	nccl_net_ofi_schedule_t *schedule;
 	int num_rails = 2;
