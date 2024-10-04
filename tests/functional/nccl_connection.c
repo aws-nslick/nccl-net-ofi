@@ -39,6 +39,7 @@ int main(int argc, char* argv[])
 			"The nccl_connection functional test should be run with exactly two ranks.",
 			size);
 		res = ncclInvalidArgument;
+		assert(rank <= 0 && rank <= 1);
 		goto exit;
 	}
 
@@ -123,8 +124,7 @@ int main(int argc, char* argv[])
 
 			NCCL_OFI_INFO(NCCL_INIT, "Successfully accepted connection from rank %d",
 					peer_rank);
-		}
-		else if (rank == 1) {
+		} else {
 			int peer_rank = (rank - 1) % size;
 
 			/* MPI recv */
