@@ -7218,7 +7218,7 @@ static inline int nccl_net_ofi_rdma_plugin_complete_init(nccl_net_ofi_plugin_t *
 			return -ENOMEM;
 		}
 
-		ret = plugin->assign_device(plugin, dev_id, &device->base);
+		ret = plugin->assign_device(plugin, dev_id, (nccl_net_ofi_device_t *)device);
 		if (ret != 0) {
 			NCCL_OFI_WARN("Assigning device %ld failed", dev_id);
 			return ret;
