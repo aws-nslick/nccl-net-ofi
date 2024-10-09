@@ -177,7 +177,7 @@ AS_IF([test "${enable_picky_compiler}" != "no"],
        AS_UNSET([picky_compiler_flags])])
 
 static_analysis_flags=""
-gcc_fanalyzer_flags="-fanalyzer"
+gcc_fanalyzer_flags="-fanalyzer -Wanalyzer-too-complex -fanalyzer-transitivity -fanalyzer-verbosity=4"
 AX_CHECK_COMPILE_FLAG([${gcc_fanalyzer_flags}], [static_analysis_flags="${gcc_fanalyzer_flags}"], [], [-Werror])
 dnl todo: clang-sa flags
 werror_flags="${static_analysis_flags} -Werror"
