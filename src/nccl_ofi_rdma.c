@@ -6978,7 +6978,7 @@ static nccl_net_ofi_rdma_device_t *nccl_net_ofi_rdma_device_create(
 		return NULL;
 	}
 
-	ret = nccl_net_ofi_device_init(&device->base, plugin, dev_id,
+	ret = nccl_net_ofi_device_init((nccl_net_ofi_device_t *)device, plugin, dev_id,
 				       info_list->fabric_attr->prov_name);
 	if (ret != 0) {
 		NCCL_OFI_WARN("Initializing device %i failed: %s", dev_id, strerror(-ret));
