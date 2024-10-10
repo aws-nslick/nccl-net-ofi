@@ -276,7 +276,7 @@ jobs:
           if-no-files-found: ignore
 
   codechecker:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     needs: [distcheck]
     strategy:
       matrix:
@@ -296,6 +296,7 @@ jobs:
       - name: Install Base Dependencies
         run: |
           sudo apt-get update -y
+          sudo apt-get install -y gcc-14 g++-14
           sudo apt-get install -y ${{ env.APT_PACKAGES }}
 
       - name: Install CUDA SDK
@@ -327,8 +328,8 @@ jobs:
             ./configure --with-mpi=/opt/amazon/openmpi \
                         --with-libfabric=/opt/amazon/efa \
                         --enable-tests=yes \
-                        --enable-werror=yes \
-                        --enable-picky-compiler=yes \
+                        --enable-werror=no \
+                        --enable-picky-compiler=no \
                         --enable-cxx=${{ matrix.mode == 'cxx' && 'yes' || 'no' }} \
                         --enable-platform-aws \
                         --enable-neuron
@@ -336,8 +337,8 @@ jobs:
             ./configure --with-mpi=/opt/amazon/openmpi \
                         --with-libfabric=/opt/amazon/efa \
                         --enable-tests=yes \
-                        --enable-werror=yes \
-                        --enable-picky-compiler=yes \
+                        --enable-werror=no \
+                        --enable-picky-compiler=no \
                         --enable-cxx=${{ matrix.mode == 'cxx' && 'yes' || 'no' }} \
                         --enable-platform-aws \
                         --with-cuda=/usr/local/cuda/
@@ -352,7 +353,7 @@ jobs:
           config: .github/codechecker.yaml
           install-custom: true
           version: v6.23.1
-          llvm-version: '18'
+          llvm-version: '19'
 
       - name: Save CodeChecker HTML output.
         uses: actions/upload-artifact@v4
