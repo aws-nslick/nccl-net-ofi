@@ -169,8 +169,7 @@ nccl_ofi_mr_cache_t *nccl_ofi_mr_cache_init(size_t init_num_entries,
 /**
  * Finalize mr cache
  */
-void nccl_ofi_mr_cache_finalize(nccl_ofi_mr_cache_t *cache)
-	__attribute__((nonnull));
+void nccl_ofi_mr_cache_finalize(nccl_ofi_mr_cache_t *cache);
 
 /**
  * Lookup a cache entry matching the given address and size
@@ -178,8 +177,7 @@ void nccl_ofi_mr_cache_finalize(nccl_ofi_mr_cache_t *cache)
  * If entry is found, refcnt is increased
  * @return mr handle if found, or NULL if not found
  */
-void *nccl_ofi_mr_cache_lookup_entry(nccl_ofi_mr_cache_t *cache, nccl_ofi_mr_ckey_ref ckey)
-	__attribute__((nonnull));
+void *nccl_ofi_mr_cache_lookup_entry(nccl_ofi_mr_cache_t *cache, nccl_ofi_mr_ckey_ref ckey);
 
 /**
  * Insert a new cache entry with the given address and size
@@ -188,8 +186,7 @@ void *nccl_ofi_mr_cache_lookup_entry(nccl_ofi_mr_cache_t *cache, nccl_ofi_mr_cke
  *	   -ENOMEM, on allocation failure
  *	   -EEXIST, if matching entry already exists in cache
  */
-int nccl_ofi_mr_cache_insert_entry(nccl_ofi_mr_cache_t *cache, nccl_ofi_mr_ckey_ref ckey, void *handle)
-	__attribute__((nonnull));
+int nccl_ofi_mr_cache_insert_entry(nccl_ofi_mr_cache_t *cache, nccl_ofi_mr_ckey_ref ckey, void *handle);
 
 /**
  * Decrement refcnt of entry with given handle. If refcnt was reduced to 0,
@@ -200,8 +197,7 @@ int nccl_ofi_mr_cache_insert_entry(nccl_ofi_mr_cache_t *cache, nccl_ofi_mr_ckey_
  *	   1, on success, and reg was deleted (refcnt was zero)
  *	   -ENOENT, if no matching entry was found
  */
-int nccl_ofi_mr_cache_del_entry(nccl_ofi_mr_cache_t *cache, void *handle)
-	__attribute__((nonnull));
+int nccl_ofi_mr_cache_del_entry(nccl_ofi_mr_cache_t *cache, void *handle);
 
 #ifdef __cplusplus
 }  // End extern "C"
