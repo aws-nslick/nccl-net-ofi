@@ -1,3 +1,1 @@
--/tests/functional/*
--/tests/unit/*
--/include/nccl-headers/*/*
+-*tests/*
