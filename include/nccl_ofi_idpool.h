@@ -41,7 +41,8 @@ typedef struct nccl_ofi_idpool {
  * @return	0 on success
  *		non-zero on error
  */
-int nccl_ofi_idpool_init(nccl_ofi_idpool_t *idpool, size_t size);
+int nccl_ofi_idpool_init(nccl_ofi_idpool_t *idpool, size_t size)
+	__attribute__((nonnull(1)));
 
 /*
  * @brief	Allocate an ID
@@ -57,7 +58,8 @@ int nccl_ofi_idpool_init(nccl_ofi_idpool_t *idpool, size_t size);
  * @return	the extracted ID (zero-based) on success,
  *		negative value on error
  */
-int nccl_ofi_idpool_allocate_id(nccl_ofi_idpool_t *idpool);
+int nccl_ofi_idpool_allocate_id(nccl_ofi_idpool_t *idpool)
+	__attribute__((nonnull));
 
 /*
  * @brief	Free an ID from the pool
@@ -73,7 +75,8 @@ int nccl_ofi_idpool_allocate_id(nccl_ofi_idpool_t *idpool);
  * @return	0 on success
  *		non-zero on error
  */
-int nccl_ofi_idpool_free_id(nccl_ofi_idpool_t *idpool, size_t id);
+int nccl_ofi_idpool_free_id(nccl_ofi_idpool_t *idpool, size_t id)
+	__attribute__((nonnull(1)));
 
 /*
  * @brief	Release pool of IDs and free resources
@@ -85,7 +88,8 @@ int nccl_ofi_idpool_free_id(nccl_ofi_idpool_t *idpool, size_t id);
  * @return	0 on success
  *		non-zero on error
  */
-int nccl_ofi_idpool_fini(nccl_ofi_idpool_t *idpool);
+int nccl_ofi_idpool_fini(nccl_ofi_idpool_t *idpool)
+	__attribute__((nonnull));
 
 #ifdef __cplusplus
 } // End extern "C"
