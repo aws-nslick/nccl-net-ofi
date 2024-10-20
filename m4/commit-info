@@ -1,0 +1,312 @@
+#!/usr/bin/env perl
+#
+# Copyright (c) 2024, Amazon.com, Inc. or its affiliates. All rights reserved.
+# See LICENSE.txt for license information
+
+use strict;
+use warnings;
+use Getopt::Long qw(GetOptions);
+use List::Util qw(first);
+use Cwd qw();
+use feature qw(switch);
+# use Data::Dumper;
+
+## RFC: Give Version Control All Version Control
+
+# == What is this?
+#
+#   This is a script that queries git metadata and produces a set of version
+#   variables, to be used by automake and/or injected into packaging scripts.
+#
+# == Why perl?
+#
+#   perl is a dependency of automake/autoconf/autoreconf across all distros, and
+#   this script is only ever invoked by autotools. This script would be absurdly
+#   painful in bourne shell.
+#
+# == Where will versions be defined?
+#
+#  1. The proposal is that going forward from the introduction of this commit,
+#     versioning would be exclusively defined in our git tags, and never from
+#     any static string checked into the tree. Grepping for a version in this
+#     repo should never return a result.
+#
+#     Why?
+#       We must create git tags for all releases, and that might as well be
+#       totally sufficient. Prior to this approach, we also had to make a commit
+#       changing the version in configure.ac. With the introduction of various
+#       package manager definitions under `contrib/', updating versions in all
+#       of these files makes you yearn for a quiet farm. Templating those
+#       package definition files with automake such that they assume a
+#       consistent version quickly devolves into a kafekesque nightmare.
+#
+#       It's significantly easier to just let our VCS system manage our
+#       versioning. Stop letting tail wag dog.
+#
+# == Sounds great, but what about tarball users that don't have git metadata.
+#
+#       This is documented in detail in the .gitattributes file residing in the
+#       same directory. tl;dr: git-fu saves the day.
+#
+# == Tagging in this repo:
+#
+#  Historically:
+#
+#    1. "v<maj>.<min>" tags, referring to commits on master. Very early in the
+#       project.
+#
+#    2. "v<maj>.<min>.<rev>" tags, referring to commits on master. Still early.
+#
+#    3. "v<maj>.<min>.<rev>", tags, referring to commits on release branches.
+#       Somewhat recent.
+#
+#    4. "v<maj>.<min>.<rev>-aws" tags, continuing to refer to commits on release
+#       branches. Not to be confused with the "--enable-platform-aws" build
+#       flag, the "-aws" suffix was intended to denote that the release was only
+#       tested with prov/efa and that we couldn't vouch in good faith for the
+#       stability of it on other providers. Traditional non-suffixed tags as in
+#       (3) ceased entirely.
+#
+#    5. Throughout all tag schemes, a mixture of unannotated and annotated tags
+#       has been used.
+#
+# Problem 1: mixing annotated and unannotated tags.
+#
+#   As far as this script is concerned, this just means we need to consistently
+#   pass `--tags` to git-describe to get the expected results.
+#
+#   Going forward, for any release tag, it's almost always correct to use an
+#   annotated tag and not a lightweight tag. Maintainers should use annotated
+#   tags going forward. (Annotated tags are "public" immutable tags, come
+#   alongside signing and the ability to add notes, and they should never move
+#   or be gc'd. Lightweight tags on the other hand are "private" tags that are
+#   liable to move or entirely disappear at any time. (Example: a lightweight
+#   tag would be appropriate for a floating "v<Maj>.<Min>" tag, which is moved
+#   with each point release to always point to the highest annotated
+#   v<Maj>.<Min>.<Rev> tag on that series.)
+#
+# Problem 2: "-aws" suffix and semver:
+#
+#  this project has never claimed to use semantic versioning. However, as an
+#  open source project, it's simpler for everyone if we just use versions that
+#  are semver legal so that packagers can use our version string directly.
+#
+#  The "-aws" suffix that we have assigned to the past several releases is
+#  problematic for semver parsers. While we internally consider the "-aws"
+#  suffix to be a fully valid release tag that is just AWS specific, semver
+#  rules consider versions with trailing dashes as a marker for a prerelase tag.
+#  (from semver.org):
+#
+#      > <valid semver> ::= <version core>
+#      >           | <version core> "-" <pre-release>
+#      >           | <version core> "+" <build>
+#      >           | <version core> "-" <pre-release> "+" <build>
+#
+#
+#  What we actually want is "v1.12.0+aws". This has unfortunate implications for
+#  version comparison logic -- old release tags such as "v1.6.0" are sort higher
+#  than release tags like "v1.12.0-aws". The double-whammy is that the separator
+#  we chose is one of exactly two semver-legal tokens. If we had used an
+#  underscore, it would fail to parse and would be unable to be parsed as a
+#  prerelease semver. Unless packagers know the nuance of the semver rules and
+#  manually modify the version string themselves, tooling has no way of breaking
+#  out of the semver flow.
+#
+#  This script attempts to restructure the input tag into a semver compatible
+#  string, which is able to be reflected in the package definitions maintained
+#  in-tree. However, the tag itself is still bad, and any tooling that scans our
+#  repo for tags to find the latest available version is still liable to do the
+#  wrong thing. Maintainers should consider adopting a new tag format or
+#  dropping the aws suffix entirely.
+#
+# Problem 3: The mixture of tagging release commits on release branches, versus
+#            historically tagging release commits on master.
+#
+#  As an example, at the time of writing, the latest release series is 1.12, but
+#    + `git describe master` returns v1.0.1-640-gecbf298
+#    + `git describe --tags master` returns "v1.4.0-576-gecbf298"
+#
+#  The base versions above correspond to most recent annotated and unannoted
+#  tags respectively from master, going up the commit tree towards the initial
+#  commit. They are unmaintained releases that are very out of date.
+#
+#  For well over a year, our release tags are created against commits that
+#  reside on release branches, where those release branches have forked off
+#  master. Because they do not have a common lineage towards the initial commit,
+#  they are not considered. Thus git doens't see them and is forced to use an
+#  old release version instead.
+#
+#  There are two ways to possibly work around this: either remove the reachable
+#  tags from consideration (commits from master will then become indescribable,
+#  which we can detect and coerce into a sort-low version like "0.0.0"), or
+#  figure out a way to shoehorn the detached release tag refs into consideration
+#  despite that they are not directly reachable. (commits from master would
+#  remain describable, but at least the version would reflect that they are
+#  applicable-but-unreleased commits to the latest release, instead of
+#  applicable-but-unreleased to an irrelevant legacy branch.)
+#
+#  Excluding the bad tags is much simpler, and it's what this script chooses.
+#
+
+sub semver_parse {
+    # Parse a semver into its tokens.
+    my $regex = qr/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/mp;
+    my $str = shift;
+    return ($str =~ /$regex/g) ? {
+        "major" => +$1,
+        "minor" => +$2,
+        "point" => +$3,
+        "prerel" => ($4 ? [split(qr/\./, $4)] : []),
+        "buildmeta" => ($5 ? [split(qr/\./, $5)]: []),
+    } : {};
+}
+
+sub make_semver_str {
+    # Take a semver hash from above, spit out a semver string.
+    my $semver = shift;
+    ref($semver) eq 'HASH' or die "";
+    my $maj = $semver->{"major"};
+    my $min = $semver->{"minor"};
+    my $pt = $semver->{"point"};
+    my $prerel = scalar(@{$semver->{"prerel"}}) ? "-" . join(".", @{$semver->{"prerel"}}) : "";
+    my $buildmeta = scalar(@{$semver->{"buildmeta"}}) ? "+" . join(".", @{$semver->{"buildmeta"}}) : "";
+    return "$maj.$min.$pt$prerel$buildmeta";
+}
+
+sub git_meta {
+    # either query git for metadata, or detect and use injected metadata from
+    # git-archive.
+    unless (@_ == 2) {
+        die "Usage: git_meta <ish> <path/to/tree>\n";
+    }
+    my ($ish, $git_dir) = splice(@_, 0, 2);
+
+    # gitattributes for this file ensures that if git-archive is used, these
+    # strings are modified to contain the git queries directly.
+    my %format_toks = (
+        branches      => q[$Format:%(decorate:prefix=,suffix=,tag=,pointer==,separator= )$],
+        commit_describe      => q[$Format:%(describe:tags=true,abbrev=15,exclude=v0\.9,exclude=v0\.9\.[1-2],exclude=v1\.[0-4]\.[0-5])$],
+        commit_author_alias  => q[$Format:%aL$],
+        commit_timestamp_unix       => q[$Format:%ct$],
+        full_hash     => q[$Format:%H$],
+    );
+
+    # disgusting regex, but enforces that git-archive cannot confuse the regex
+    # itself definition as a valid string for substitution.
+    my $regex = qr<^[($)][Ff][Oo][Rr][Mm][Aa][Tt]:(.+)[($)]$>;
+
+    my %meta;
+    while (my ($key, $value) = each %format_toks) {
+        chomp $value;
+        if ($value =~ /$regex/g) {
+            # git-archive not involved, ask git directly.
+            my $fmt_tok = $1;
+            my $output = qx(git -C "$git_dir" log -1 --format="$fmt_tok" "$ish");
+            chomp $output;
+            $meta{$key} = $output;
+        } else {
+            # git-archive injected, just trim the injected value, no git calls required.
+            chomp $value;
+            $meta{$key} = $value;
+        }
+    }
+
+    # process the branches metadata further --
+    # Value before: HEAD=branch-head-pointed-at [ ... other branches pointing at same sha ... ]
+    # comma-separate the extra branches, and move the primary branch to its own variable.
+    if ($meta{"branches"} =~ /^HEAD=(\S+)(?:\s+(.+))?$/) {
+        $meta{"branch"} = $1;
+        $meta{"branch_aliases"} = join(',', split(/\s+/, $2)) if defined $2;
+        delete $meta{"branches"};
+    }
+
+    return \%meta;
+}
+
+sub coerce_tag_to_semver {
+    my $in_tag = shift;
+    my $tag = $in_tag;
+
+    # strip v prefix and aws tag
+    $tag =~ s/(^v|-aws)//g;
+
+    # should now parse as a semver string.
+    my $semver_ref = semver_parse($tag) or die "failed to make semver from $tag";
+
+    # if original tag had aws, add it back in under build meta
+    push @{$semver_ref->{buildmeta}}, "aws" if ($in_tag =~ /-aws/);
+
+    return $semver_ref;
+}
+
+sub handle_offbranch_commit {
+    my $meta = shift or die;
+    # commit doesn't describe, not on a release branch. add devel metadata
+    my $ver = semver_parse("0.0.0");
+    push @{$ver->{prerel}}, ("ts" . $meta->{commit_timestamp_unix});
+    push @{$ver->{prerel}}, ("g" . substr($meta->{full_hash}, 0, 15));
+    (push @{$ver->{buildmeta}}, $meta->{commit_author_alias}) if $meta->{commit_author_alias};
+    (push @{$ver->{buildmeta}}, $meta->{branch}) if $meta->{branch};
+    return $ver;
+}
+
+sub handle_onbranch_commit {
+    my $meta = shift or die;
+    my $ver = coerce_tag_to_semver($meta->{commit_describe});
+    return $ver;
+}
+
+sub set_variable {
+    my $fmt = shift or die "fmt not provided";
+    my $varname = shift or die "must assign to a variable";
+    my $varval = shift // "";
+
+    if ($fmt eq "m4") {
+        print "m4_define([$varname],[$varval])\n";
+    } elsif ($fmt eq "env") {
+        print uc($varname) . "=" . '"' . $varval . '"' . "\n";
+    } elsif ($fmt eq "make") {
+        print uc($varname) . " ?= " . '"' . $varval . '"' . "\n";
+    } elsif ($fmt eq "yaml") {
+        print lc($varname) . ": " . '"' . $varval . '"' . "\n";
+    } elsif ($fmt eq "yaml") {
+        print lc($varname) . ": " . '"' . $varval . '"' . "\n";
+    } else {
+        die "invalid fmt type";
+    }
+}
+
+if ($0 eq __FILE__) {
+    my $git_tree;
+    my $git_ish;
+    my $format;
+    GetOptions(
+        'format=s' => \$format,
+        'git_tree=s' => \$git_tree,
+        'ish=s'     => \$git_ish,
+    ) or die "Error in command-line arguments";
+
+    $format //= "m4";
+    $git_tree //= Cwd::abs_path();
+    $git_ish //= "HEAD";
+
+    my $meta = git_meta($git_ish, $git_tree);
+    while (my ($key, $value) = each %{$meta}) {
+        set_variable($format, uc("git_$key"), "$value");
+    }
+
+    # If it describes, it's on a release branch. Otherwise, it's a
+    # master/development commit. Dispatch to the right handler.
+    my $semver_meta = !$meta->{commit_describe} ?
+        handle_offbranch_commit($meta) :
+        handle_onbranch_commit($meta);
+    while (my ($key, $value) = each %{$semver_meta}) {
+        my $varname = uc("semver_$key");
+        my $varval = join('.', @$value) if ref($value) eq 'ARRAY';
+        $varval //= $value;
+        set_variable($format, $varname, $varval);
+    }
+    set_variable($format, "SEMVER_BASE", "$semver_meta->{major}.$semver_meta->{minor}.$semver_meta->{point}");
+    my $semver_top_str = make_semver_str($semver_meta);
+    set_variable($format, "PROJECT_VERSION", $semver_top_str);
+}

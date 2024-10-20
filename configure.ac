@@ -5,8 +5,12 @@
 # See LICENSE.txt for license information
 #
 
+dnl fixme: why is this bpatsubst needed??
+m4_define([GET_GIT_VERSION_INFO], [m4_bpatsubst(m4_esyscmd([m4/commit-info]), [ ], [\ ])])
+GET_GIT_VERSION_INFO
+
 # Initialization
-AC_INIT([aws-ofi-nccl], [1.12.1a1-aws], [al-ofi-nccl-team@amazon.com], , [http://github.com/aws/aws-ofi-nccl])
+AC_INIT([aws-ofi-nccl], [PROJECT_VERSION], [al-ofi-nccl-team@amazon.com], [nccl-ofi], [http://github.com/aws/aws-ofi-nccl])
 AC_PREREQ([2.69])
 AC_CONFIG_SRCDIR([src/nccl_ofi_net.c])
 AC_CONFIG_AUX_DIR([build-aux])
