@@ -107,3 +107,5 @@ Branch-Point-Of-Release: v1.5.0-aws
 Branch-Point-Of-Release: v1.6.0
 
 Branch-Point-Of-Release: v1.7.0-aws
+
+Branch-Point-Of-Release: v1.7.0rc1-aws
